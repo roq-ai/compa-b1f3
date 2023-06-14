@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model client {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name       String   @db.VarChar(255)
+  email      String   @db.VarChar(255)
+  project_id String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  project    project  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model cost_estimate {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  project_id  String   @db.Uuid
+  description String   @db.VarChar(255)
+  amount      Int
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  project     project  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model organization {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description String?   @db.VarChar(255)
+  image       String?   @db.VarChar(255)
+  name        String    @db.VarChar(255)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime  @default(now()) @db.Timestamp(6)
+  user_id     String    @db.Uuid
+  tenant_id   String    @db.VarChar(255)
+  user        user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project     project[]
+}
+
+model project {
+  id                 String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name               String          @db.VarChar(255)
+  organization_id    String          @db.Uuid
+  project_manager_id String          @db.Uuid
+  created_at         DateTime        @default(now()) @db.Timestamp(6)
+  updated_at         DateTime        @default(now()) @db.Timestamp(6)
+  client             client[]
+  cost_estimate      cost_estimate[]
+  organization       organization    @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user               user            @relation(fields: [project_manager_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @default(now()) @db.Timestamp(6)
+  organization organization[]
+  project      project[]
+}
